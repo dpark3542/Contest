@@ -1,0 +1,8 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+class %ClassName% {
+public:
+  void solve(istream& in, ostream& out) {}
+};

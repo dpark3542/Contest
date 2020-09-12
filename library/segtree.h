@@ -1,6 +1,7 @@
 #ifndef CONTEST_SEGTREE_H
 #define CONTEST_SEGTREE_H
 
+#include <iostream>
 #include <vector>
 
 template<typename T>

@@ -1,8 +1,17 @@
 #include "segtree.h"
 
+#ifndef _GLIBCXX_DEBUG
+#define _GLIBCXX_DEBUG false
+#endif
 
 template<typename T>
 segtree<T>::segtree(int n):n(n) {
+  if (_GLIBCXX_DEBUG) {
+    if (n > std::vector<T>::max_size() / 2) {
+      std::cerr << "Segtree of size " << n << " requested. Max size is " << std::vector<T>::max_size() / 2 << '.' << std::endl;
+      return;
+    }
+  }
   tree = std::vector<T>(2 * n);
 }
 
@@ -28,11 +37,23 @@ void segtree<T>::build(const T *a) {
 
 template<typename T>
 T segtree<T>::operator[](int i) {
+  if (_GLIBCXX_DEBUG) {
+    if (i < 0 || i >= n) {
+      std::cerr << "Segtree index " << i << " out of bounds." << std::endl;
+      return;
+    }
+  }
   return tree[n + i];
 }
 
 template<typename T>
 void segtree<T>::update(int i, T x) {
+  if (_GLIBCXX_DEBUG) {
+    if (i < 0 || i >= n) {
+      std::cerr << "Segtree index " << i << " out of bounds." << std::endl;
+      return;
+    }
+  }
   i += n;
   tree[i] = x;
   while (i > 1) {
@@ -43,6 +64,20 @@ void segtree<T>::update(int i, T x) {
 
 template<typename T>
 T segtree<T>::sum(int l, int r) {
+  if (_GLIBCXX_DEBUG) {
+    if (l < 0 || l >= n) {
+      std::cerr << "Segtree left index " << l << " out of bounds." << std::endl;
+      return;
+    }
+    if (r < 0 || r >= n) {
+      std::cerr << "Segtree right index " << r << " out of bounds." << std::endl;
+      return;
+    }
+    if (r > l) {
+      std::cerr << "Segtree left and right indices " << l << ", " << r << " do not agree." << std::endl;
+      return;
+    }
+  }
   T res = 0;
   l += n;
   r += n + 1;

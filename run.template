@@ -7,6 +7,12 @@
 #include <vector>
 #include <cctype>
 #include <ctime>
+#include <windows.h>
+
+#define BLACK 7
+#define GREEN 2
+#define RED 12
+#define BLUE 1
 
 namespace jhelper {
 
@@ -33,19 +39,12 @@ std::vector<std::vector<std::string>> tokenize(std::string s) {
   return v;
 }
 
-bool check(std::string expected, std::string actual) {
-  while(!expected.empty() && isspace(*--expected.end()))
-    expected.erase(--expected.end());
-  while(!actual.empty() && isspace(*--actual.end()))
-    actual.erase(--actual.end());
-  return expected == actual;
 }
-
-} // namespace jhelper
 
 int main() {
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   std::vector<jhelper::Test> tests = {
     %Tests%
   };
@@ -53,16 +52,9 @@ int main() {
   int testID = 0;
   std::cout << std::fixed;
   double maxTime = 0.0;
-  for(const jhelper::Test& test: tests ) {
-    std::cout << "Test #" << ++testID << std::endl;
+  for(const jhelper::Test& test : tests) {
+    std::cout << "Test #" << testID++ << std::endl;
     if (test.active) {
-      std::cout << "Input: \n" << test.input << std::endl;
-      if (test.has_output) {
-        std::cout << "Expected output: \n" << test.output << std::endl;
-      }
-      else {
-        std::cout << "Expected output: \n" << "N/A" << std::endl;
-      }
       std::stringstream in(test.input);
       std::ostringstream out;
       std::clock_t start = std::clock();
@@ -71,9 +63,7 @@ int main() {
       std::clock_t finish = std::clock();
       double currentTime = double(finish - start) / CLOCKS_PER_SEC;
       maxTime = currentTime > maxTime ? currentTime : maxTime;
-      std::cout << "Actual output: \n" << out.str() << std::endl;
       if (test.has_output) {
-//        bool result = jhelper::check(test.output, out.str());
         bool result = true;
         std::string msg;
         std::vector<std::vector<std::string>> a = jhelper::tokenize(test.output), b = jhelper::tokenize(out.str());
@@ -96,13 +86,36 @@ int main() {
           }
         }
         if (result) {
-          std::cout << "Result: OK" << std::endl;
+          std::cout << "Result: ";
+          std::cout.flush();
+          SetConsoleTextAttribute(hConsole, GREEN);
+          std::cout << "OK" << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
         }
         else {
-          std::cout << "Result: Wrong Answer" << std::endl;
+          std::cout << "Input: " << std::endl;
+          SetConsoleTextAttribute(hConsole, BLUE);
+          std::cout << test.input << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
+          std::cout << "Expected output: " << std::endl;
+          SetConsoleTextAttribute(hConsole, BLUE);
+          std::cout << test.output << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
+          std::cout << "Actual output: " << std::endl;
+          SetConsoleTextAttribute(hConsole, BLUE);
+          std::cout << out.str() << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
+          std::cout << "Result: ";
+          std::cout.flush();
+          SetConsoleTextAttribute(hConsole, RED);
+          std::cout << "Wrong Answer" << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
           std::cout << msg << std::endl;
         }
         allOK = allOK && result;
+      }
+      else {
+        std::cout << "Actual output: \n" << out.str() << std::endl;
       }
       std::cout << "Time: " << currentTime << "s." << std::endl;
     }
@@ -113,10 +126,14 @@ int main() {
     std::cout << std::endl;
   }
   if(allOK) {
+    SetConsoleTextAttribute(hConsole, GREEN);
     std::cout << "All OK" << std::endl;
+    SetConsoleTextAttribute(hConsole, BLACK);
   }
   else {
+    SetConsoleTextAttribute(hConsole, RED);
     std::cout << "Some cases failed" << std::endl;
+    SetConsoleTextAttribute(hConsole, BLACK);
   }
   std::cout << "Maximal time: " << maxTime << "s." << std::endl;
   return 0;

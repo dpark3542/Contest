@@ -16,7 +16,7 @@ segtree<T>::segtree(int n):n(n) {
 }
 
 template<typename T>
-void segtree<T>::build(std::vector<T> a) {
+void segtree<T>::build(std::vector<T> const &a) {
   for (int i = 0; i < n; i++) {
     tree[n + i] = a[i];
   }
@@ -26,7 +26,7 @@ void segtree<T>::build(std::vector<T> a) {
 }
 
 template<typename T>
-void segtree<T>::build(const T *a) {
+void segtree<T>::build(T const *a) {
   for (int i = 0; i < n; i++) {
     tree[n + i] = a[i];
   }

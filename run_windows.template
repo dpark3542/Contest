@@ -1,21 +1,23 @@
 #include <ctime>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <string>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <vector>
+#include <windows.h>
 
 #include "%TaskFile%"
 
+#define BLACK 7
+#define GREEN 2
+#define RED 12
+#define BLUE 1
+
 namespace jhelper {
   struct Test {
-      std::string input;
-      std::string output;
-      bool active;
-      bool has_output;
+    std::string input;
+    std::string output;
+    bool active;
+    bool has_output;
   };
 
   std::vector<std::vector<std::string>> tokenize(std::string s) {
@@ -33,22 +35,12 @@ namespace jhelper {
     }
     return v;
   }
-
-  int get_memory_size() {
-    std::ifstream proc;
-    proc.open("/proc/" + std::to_string(getpid()) + "/status");
-    std::string s = "", t;
-    while (s != "VmPeak:") {
-      proc >> s;
-    }
-    proc >> s;
-    return std::stoi(s);
-  }
 }
 
 int main() {
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   std::vector<jhelper::Test> tests = {
     %Tests%
   };
@@ -56,38 +48,19 @@ int main() {
   int testID = 0;
   std::cout << std::fixed;
   double maxTime = 0.0;
-  int maxMemory = 0;
   for(const jhelper::Test& test : tests) {
     std::cout << "Test #" << testID++ << std::endl;
-    if (!test.active) {
-      std::cout << "SKIPPED\n" << std::endl;
-      continue;
-    }
-    int fd[2];
-    if (pipe(fd) < 0) {
-      std::cerr << "Pipe failed." << std::endl;
-      return 1;
-    }
-    pid_t pid = fork();
-    if (pid == 0) {
-      // child
-      close(fd[0]);
-
-      // run test
+    if (test.active) {
       std::stringstream in(test.input);
       std::ostringstream out;
-      int mem_start = jhelper::get_memory_size();
-      std::clock_t time_start = std::clock();
+      std::clock_t start = std::clock();
       %ClassName% solver;
       %SolverCall%
-      std::clock_t time_finish = std::clock();
-      int mem_end = jhelper::get_memory_size();
-
-      // parse output
-      double time = double(time_finish - time_start) / CLOCKS_PER_SEC;
-      int memory = mem_end - mem_start;
-      bool result = true;
+      std::clock_t finish = std::clock();
+      double currentTime = double(finish - start) / CLOCKS_PER_SEC;
+      maxTime = currentTime > maxTime ? currentTime : maxTime;
       if (test.has_output) {
+        bool result = true;
         std::string msg;
         std::vector<std::vector<std::string>> a = jhelper::tokenize(test.output), b = jhelper::tokenize(out.str());
         if (a.size() != b.size()) {
@@ -109,65 +82,55 @@ int main() {
           }
         }
         if (result) {
-          std::cout << "Result: OK" << std::endl;
+          std::cout << "Result: ";
+          std::cout.flush();
+          SetConsoleTextAttribute(hConsole, GREEN);
+          std::cout << "OK" << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
         }
         else {
           std::cout << "Input: " << std::endl;
+          SetConsoleTextAttribute(hConsole, BLUE);
           std::cout << test.input << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
           std::cout << "Expected output: " << std::endl;
+          SetConsoleTextAttribute(hConsole, BLUE);
           std::cout << test.output << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
           std::cout << "Actual output: " << std::endl;
+          SetConsoleTextAttribute(hConsole, BLUE);
           std::cout << out.str() << std::endl;
-          std::cout << "Result: Wrong Answer" << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
+          std::cout << "Result: ";
+          std::cout.flush();
+          SetConsoleTextAttribute(hConsole, RED);
+          std::cout << "Wrong Answer" << std::endl;
+          SetConsoleTextAttribute(hConsole, BLACK);
           std::cout << msg << std::endl;
         }
+        allOK = allOK && result;
       }
       else {
         std::cout << "Actual output: \n" << out.str() << std::endl;
       }
-      std::cout.precision(2);
-      std::cout << "Time: " << time << " s." << std::endl;
-      std::cout << "Memory: " << memory << " kB.\n" << std::endl;
-      std::cout.precision(6);
+      std::cout << "Time: " << currentTime << "s." << std::endl;
+    }
+    else {
+      std::cout << "SKIPPED\n";
+    }
 
-      // write and close
-      write(fd[1], &result, sizeof(bool));
-      write(fd[1], &time, sizeof(double));
-      write(fd[1], &memory, sizeof(int));
-      close(fd[1]);
-      return 0;
-    }
-    else if (pid < 0) {
-      // error
-      std::cerr << "Fork failed." << std::endl;
-      return -1;
-    }
-    // parent
-//    std::cerr << "PID: " << pid << std::endl;
-    close(fd[1]);
-    // TODO: kill child after timer
-    if (wait(NULL) == -1) {
-      std::cerr << "Child process error." << std::endl;
-    }
-    bool result;
-    double time;
-    int memory;
-    read(fd[0], &result, sizeof(bool));
-    read(fd[0], &time, sizeof(double));
-    read(fd[0], &memory, sizeof(int));
-    close(fd[0]);
-    allOK &= result;
-    maxTime = time > maxTime ? time : maxTime;
-    maxMemory = memory > maxMemory ? memory : maxMemory;
+    std::cout << std::endl;
   }
   if (allOK) {
+    SetConsoleTextAttribute(hConsole, GREEN);
     std::cout << "All OK" << std::endl;
+    SetConsoleTextAttribute(hConsole, BLACK);
   }
   else {
+    SetConsoleTextAttribute(hConsole, RED);
     std::cout << "Some cases failed" << std::endl;
+    SetConsoleTextAttribute(hConsole, BLACK);
   }
-  std::cout.precision(2);
-  std::cout << "Max time: " << maxTime << " s." << std::endl;
-  std::cout << "Max memory: " << maxMemory << " kB." << std::endl;
+  std::cout << "Max time: " << maxTime << "s." << std::endl;
   return 0;
 }

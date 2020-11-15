@@ -12,8 +12,8 @@ private:
 
 public:
   explicit segtree(int n);
-  void build(std::vector<T> a);
-  void build(const T *a);
+  void build(std::vector<T> const &a);
+  void build(T const *a);
   T operator[](int i);
   void update(int i, T x);
   T sum(int a, int b);

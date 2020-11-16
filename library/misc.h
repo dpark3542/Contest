@@ -5,6 +5,9 @@
 #ifndef CONTEST_MISC_H
 #define CONTEST_MISC_H
 
+#define min(x,y) ((x) < (y) ? (x) : (y))
+#define max(x,y) ((x) > (y) ? (x) : (y))
+
 namespace contest {
   struct custom_hash {
     static uint64_t splitmix64(uint64_t x) {

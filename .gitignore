@@ -1,0 +1,4 @@
+output/*
+tasks/*
+testrunner/*
+test.cpp

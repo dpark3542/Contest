@@ -1,24 +1,45 @@
+#include <csignal>
 #include <ctime>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <string>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <vector>
+
+#ifdef __linux__
+#define BLACK "\033[0;30m"
+#define RED "\033[0;31m"
+#define GREEN "\033[0;32m"
+#define BLUE "\033[0;34m"
+void print_color(const std::string& s, const std::string& color) {
+  std::cout << color << s << "\033[0m";
+}
+#elif _WIN32
+#include <windows.h>
+#define BLACK 7
+#define RED 12
+#define GREEN 2
+#define BLUE 1
+void print_color(const std::string& s, int color) {
+  std::cout.flush();
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+  std::cout << s;
+  std::cout.flush();
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), BLACK);
+}
+#endif
+
 
 #include "%TaskFile%"
 
 namespace jhelper {
   struct Test {
-      std::string input;
-      std::string output;
-      bool active;
-      bool has_output;
+    std::string input;
+    std::string output;
+    bool active;
+    bool has_output;
   };
 
-  std::vector<std::vector<std::string>> tokenize(std::string s) {
+  std::vector<std::vector<std::string>> tokenize(const std::string& s) {
     std::vector<std::vector<std::string>> v;
     std::stringstream ss(s);
     for (std::string line; std::getline(ss, line); ) {
@@ -34,19 +55,30 @@ namespace jhelper {
     return v;
   }
 
-  int get_memory_size() {
-    std::ifstream proc;
-    proc.open("/proc/" + std::to_string(getpid()) + "/status");
-    std::string s = "", t;
-    while (s != "VmPeak:") {
-      proc >> s;
+  std::string format(std::string s) {
+    if (s.empty()) {
+      return s;
     }
-    proc >> s;
-    return std::stoi(s);
+    int i = s.size() - 1;
+    while (i >= 0 && isspace(s[i])) {
+      i--;
+    }
+    if (i >= 99) {
+      return s.substr(0, 96) + "...\n";
+    }
+    if (i < s.size() - 1) {
+      return s.substr(0, i + 1) + "\n";
+    }
+    return s + "\n";
+  }
+
+  void abort_handler(int) {
+    throw std::exception();
   }
 }
 
 int main() {
+  signal(SIGABRT, &jhelper::abort_handler);
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
   std::vector<jhelper::Test> tests = {
@@ -56,38 +88,23 @@ int main() {
   int testID = 0;
   std::cout << std::fixed;
   double maxTime = 0.0;
-  int maxMemory = 0;
   for(const jhelper::Test& test : tests) {
     std::cout << "Test #" << testID++ << std::endl;
-    if (!test.active) {
-      std::cout << "SKIPPED\n" << std::endl;
-      continue;
-    }
-    int fd[2];
-    if (pipe(fd) < 0) {
-      std::cerr << "Pipe failed." << std::endl;
-      return 1;
-    }
-    pid_t pid = fork();
-    if (pid == 0) {
-      // child
-      close(fd[0]);
-
-      // run test
+    if (test.active) {
       std::stringstream in(test.input);
       std::ostringstream out;
-      int mem_start = jhelper::get_memory_size();
-      std::clock_t time_start = std::clock();
+      auto start = std::chrono::high_resolution_clock::now();
       %ClassName% solver;
-      %SolverCall%
-      std::clock_t time_finish = std::clock();
-      int mem_end = jhelper::get_memory_size();
-
-      // parse output
-      double time = double(time_finish - time_start) / CLOCKS_PER_SEC;
-      int memory = mem_end - mem_start;
-      bool result = true;
+      int t;
+      in >> t;
+      while (t--) {
+        %SolverCall%
+      }
+      auto finish = std::chrono::high_resolution_clock::now();
+      double currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() / 1000.0;
+      maxTime = currentTime > maxTime ? currentTime : maxTime;
       if (test.has_output) {
+        bool result = true;
         std::string msg;
         std::vector<std::vector<std::string>> a = jhelper::tokenize(test.output), b = jhelper::tokenize(out.str());
         if (a.size() != b.size()) {
@@ -109,65 +126,53 @@ int main() {
           }
         }
         if (result) {
-          std::cout << "Result: OK" << std::endl;
+          std::cout << "Result: ";
+          std::cout.flush();
+          print_color("OK", GREEN);
+          std::cout << std::endl;
         }
         else {
           std::cout << "Input: " << std::endl;
-          std::cout << test.input << std::endl;
+          print_color(jhelper::format(test.input), BLUE);
+          std::cout << std::endl;
           std::cout << "Expected output: " << std::endl;
-          std::cout << test.output << std::endl;
+          print_color(jhelper::format(test.output), BLUE);
+          std::cout << std::endl;
           std::cout << "Actual output: " << std::endl;
-          std::cout << out.str() << std::endl;
-          std::cout << "Result: Wrong Answer" << std::endl;
+          print_color(jhelper::format(out.str()), BLUE);
+          std::cout << std::endl;
+          std::cout << "Result: ";
+          std::cout.flush();
+          print_color("Wrong Answer", RED);
+          std::cout << std::endl;
           std::cout << msg << std::endl;
         }
+        allOK = allOK && result;
       }
       else {
-        std::cout << "Actual output: \n" << out.str() << std::endl;
+        std::cout << "Input: " << std::endl;
+        print_color(jhelper::format(test.input), BLUE);
+        std::cout << std::endl;
+        std::cout << "Actual output: " << std::endl;
+        print_color(jhelper::format(out.str()), BLUE);
+        std::cout << std::endl;
       }
-      std::cout.precision(2);
-      std::cout << "Time: " << time << " s." << std::endl;
-      std::cout << "Memory: " << memory << " kB.\n" << std::endl;
-      std::cout.precision(6);
+      std::cout << "Time: " << currentTime << "s." << std::endl;
+    }
+    else {
+      std::cout << "SKIPPED\n";
+    }
 
-      // write and close
-      write(fd[1], &result, sizeof(bool));
-      write(fd[1], &time, sizeof(double));
-      write(fd[1], &memory, sizeof(int));
-      close(fd[1]);
-      return 0;
-    }
-    else if (pid < 0) {
-      // error
-      std::cerr << "Fork failed." << std::endl;
-      return -1;
-    }
-    // parent
-//    std::cerr << "PID: " << pid << std::endl;
-    close(fd[1]);
-    // TODO: kill child after timer
-    if (wait(NULL) == -1) {
-      std::cerr << "Child process error." << std::endl;
-    }
-    bool result;
-    double time;
-    int memory;
-    read(fd[0], &result, sizeof(bool));
-    read(fd[0], &time, sizeof(double));
-    read(fd[0], &memory, sizeof(int));
-    close(fd[0]);
-    allOK &= result;
-    maxTime = time > maxTime ? time : maxTime;
-    maxMemory = memory > maxMemory ? memory : maxMemory;
+    std::cout << std::endl;
   }
   if (allOK) {
-    std::cout << "All OK" << std::endl;
+    print_color("All OK", GREEN);
+    std::cout << std::endl;
   }
   else {
-    std::cout << "Some cases failed" << std::endl;
+    print_color("Some cases failed", RED);
+    std::cout << std::endl;
   }
-  std::cout.precision(2);
-  std::cout << "Max time: " << maxTime << " s." << std::endl;
-  std::cout << "Max memory: " << maxMemory << " kB." << std::endl;
+  std::cout << "Max time: " << maxTime << "s." << std::endl;
   return 0;
 }

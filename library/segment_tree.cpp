@@ -45,7 +45,7 @@ public:
   proxy& operator=(const T& t) {
     st->tree[i] = t;
     for (size_t j = i; j > 1; j >>= 1) {
-      st->tree[j >> 1] = st->f(st->tree[j], st->tree[j ^ 1]);
+      st->tree[j >> 1] = st->f(st->tree[(j | 1) ^ 1], st->tree[j | 1]);
     }
     return *this;
   }

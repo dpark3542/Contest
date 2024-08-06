@@ -53,7 +53,7 @@ public:
   /**
    * Update in O(log n).
    *
-   * @param t new value
+   * @param t added value
    * @return
    */
   proxy& operator+=(const T& t) {
@@ -83,7 +83,7 @@ T contest::segment_tree<T, F>::sum(size_t l, size_t r) {
   r += n + 1;
   while (l < r) {
     if (l & 1) {
-      res = f(res, tree[l++]);
+      res = f(tree[l++], res);
     }
     if (r & 1) {
       res = f(res, tree[--r]);

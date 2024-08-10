@@ -23,6 +23,8 @@ namespace contest {
     explicit segment_tree(const std::vector<T> &a);
 
     size_t size();
+    std::vector<T>::const_iterator begin() const noexcept;
+    std::vector<T>::const_iterator end() const noexcept;
 
     struct proxy;
     /**

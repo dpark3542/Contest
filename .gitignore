@@ -1,4 +1,4 @@
 output/*
 tasks/*
 testrunner/*
-test.cpp
+main.cpp

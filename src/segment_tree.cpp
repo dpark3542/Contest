@@ -1,5 +1,6 @@
 #include "segment_tree.h"
 #include <debug/macros.h>
+#include <optional>
 #include <stdexcept>
 
 template<typename T, class F>
@@ -24,13 +25,23 @@ size_t contest::segment_tree<T, F>::size() {
 }
 
 template<typename T, class F>
+std::vector<T>::const_iterator contest::segment_tree<T, F>::begin() const noexcept {
+  return tree.begin() + n;
+}
+
+template<typename T, class F>
+std::vector<T>::const_iterator contest::segment_tree<T, F>::end() const noexcept {
+  return tree.end();
+}
+
+template<typename T, class F>
 struct contest::segment_tree<T, F>::proxy {
 private:
   segment_tree<T, F> *st;
   const size_t i;
 
 public:
-  proxy(contest::segment_tree<int> *st, size_t i): st(st), i(i) {}
+  proxy(contest::segment_tree<T> *st, size_t i): st(st), i(i) {}
 
   operator const T& () const {
     return st->tree[i];
@@ -48,16 +59,6 @@ public:
       st->tree[j >> 1] = st->f(st->tree[(j | 1) ^ 1], st->tree[j | 1]);
     }
     return *this;
-  }
-
-  /**
-   * Update in O(log n).
-   *
-   * @param t added value
-   * @return
-   */
-  proxy& operator+=(const T& t) {
-    return operator=(st->f(st->tree[i], t));
   }
 };
 
@@ -78,18 +79,35 @@ T contest::segment_tree<T, F>::sum(size_t l, size_t r) {
   __glibcxx_check_subscript(r);
   _GLIBCXX_DEBUG_VERIFY(l <= r, _M_message("left index %1; must be at most right index %2;")._M_integer(l, "#1")._M_integer(r, "#2"));
 
-  T res = tree[n + l];
-  l += n + 1;
+  std::optional<T> a, b;
+  l += n;
   r += n + 1;
   while (l < r) {
     if (l & 1) {
-      res = f(tree[l++], res);
+      if (a.has_value()) {
+        a = f(a.value(), tree[l++]);
+      } else {
+        a = tree[l++];
+      }
     }
     if (r & 1) {
-      res = f(res, tree[--r]);
+      if (b.has_value()) {
+        b = f(tree[--r], b.value());
+      } else {
+        b = tree[--r];
+      }
     }
     l >>= 1;
     r >>= 1;
   }
-  return res;
+
+  if (a.has_value()) {
+    if (b.has_value()) {
+      return f(a.value(), b.value());
+    } else {
+      return a.value();
+    }
+  } else {
+    return b.value();
+  }
 }

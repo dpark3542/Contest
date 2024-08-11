@@ -2,40 +2,40 @@
 #include <limits>
 #include "../src/segment_tree.cpp"
 
-unsigned int f(unsigned int a, unsigned int b) {
-  assert(__builtin_clz(a) + __builtin_ctz(b) == std::numeric_limits<unsigned int>::digits);
+unsigned long long f(unsigned long long a, unsigned long long b) {
+  assert(std::countl_zero(a) + std::countr_zero(b) == std::numeric_limits<unsigned long long>::digits);
   return a ^ b;
 }
 
-void check(int n, contest::segment_tree<unsigned int> &st) {
+void check(int n, contest::segment_tree<unsigned long long> &st) {
   assert(n == st.size());
 
   for (int i = 0; i < n; i++) {
-    assert(1 << i == st[i]);
+    assert(1ULL << i == st[i]);
 
     for (int j = i; j < n; j++) {
 #if __cplusplus >= 202302L
-      assert((1 << (j + 1)) - (1 << i) == st[i, j]);
+      assert((1ULL << (j + 1)) - (1ULL << i) == st[i, j]);
 #else
-      assert((1 << (j + 1)) - (1 << i) == st.sum(i, j));
+      assert((1ULL << (j + 1)) - (1ULL << i) == st.sum(i, j));
 #endif
     }
   }
 }
 
 int main() {
-  for (int n = 0; n <= 17; n++) {
-    std::vector<unsigned int> a(n);
+  for (int n = 0; n <= 63; n++) {
+    std::vector<unsigned long long> a(n);
     for (int i = 0; i < n; i++) {
-      a[i] = 1 << i;
+      a[i] = 1ULL << i;
     }
-    contest::segment_tree<unsigned int> st(a, f);
+    contest::segment_tree<unsigned long long> st(a, f);
     check(n, st);
 
-    std::vector<unsigned int> b(n);
-    contest::segment_tree<unsigned int> st2(b);
+    std::vector<unsigned long long> b(n);
+    contest::segment_tree<unsigned long long> st2(b);
     for (int i = 0; i < n; i++) {
-      st2[i] = 1 << i;
+      st2[i] = 1ULL << i;
     }
     check(n, st2);
   }

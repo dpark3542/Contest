@@ -1,7 +1,11 @@
 #include <cassert>
-#include <iostream>
 #include <limits>
 #include "../src/segment_tree.cpp"
+
+unsigned int f(unsigned int a, unsigned int b) {
+  assert(__builtin_clz(a) + __builtin_ctz(b) == std::numeric_limits<unsigned int>::digits);
+  return a ^ b;
+}
 
 void check(int n, contest::segment_tree<unsigned int> &st) {
   assert(n == st.size());
@@ -25,7 +29,7 @@ int main() {
     for (int i = 0; i < n; i++) {
       a[i] = 1 << i;
     }
-    contest::segment_tree<unsigned int> st(a);
+    contest::segment_tree<unsigned int> st(a, f);
     check(n, st);
 
     std::vector<unsigned int> b(n);

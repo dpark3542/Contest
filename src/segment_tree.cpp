@@ -10,8 +10,12 @@ contest::segment_tree<T, F>::segment_tree(const std::vector<T> &a, const F &f): 
   } else if (n > 0) {
     tree = std::vector<T>(n << 1);
     std::copy(a.begin(), a.end(), tree.begin() + n);
-    for (size_t i = n - 1; i > 0; i--) {
-      tree[i] = f(tree[i << 1], tree[i << 1 | 1]);
+    for (size_t i = n - 1, j = n >> (__builtin_ctz(n) + 1); i > 0; i--) {
+      if (i == j) {
+        j >>= 1;
+      } else {
+        tree[i] = f(tree[i << 1], tree[i << 1 | 1]);
+      }
     }
   }
 }

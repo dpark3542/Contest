@@ -45,6 +45,7 @@ private:
   const size_t i;
 
 public:
+  // TODO: make private or move out of bounds index check here
   proxy(contest::segment_tree<T> *st, size_t i): st(st), i(i) {}
 
   operator const T& () const {
@@ -68,7 +69,9 @@ public:
 
 template<typename T, class F>
 contest::segment_tree<T, F>::proxy contest::segment_tree<T, F>::operator[](size_t i) {
+#ifndef ONLINE_JUDGE
   __glibcxx_check_subscript(i);
+#endif
 
   return proxy(this, n + i);
 }
@@ -79,9 +82,11 @@ T contest::segment_tree<T, F>::operator[](size_t l, size_t r) {
 #else
 T contest::segment_tree<T, F>::sum(size_t l, size_t r) {
 #endif
+#ifndef ONLINE_JUDGE
   __glibcxx_check_subscript(l);
   __glibcxx_check_subscript(r);
   _GLIBCXX_DEBUG_VERIFY(l <= r, _M_message("left index %1; must be at most right index %2;")._M_integer(l, "#1")._M_integer(r, "#2"));
+#endif
 
   std::optional<T> a, b;
   l += n;

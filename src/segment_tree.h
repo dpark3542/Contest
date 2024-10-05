@@ -9,7 +9,6 @@ namespace contest {
    * Implementation of segment tree from https://codeforces.com/blog/entry/18051
    *
    * @tparam T type
-   * @tparam F associative, binary operator
    */
   template<typename T, class F = std::function<T(const T&, const T&)>>
   class segment_tree {
@@ -19,7 +18,19 @@ namespace contest {
     std::vector<T> tree;
 
   public:
+    /**
+     * Construct in O(n).
+     *
+     * @param a base vector
+     * @param f associative, binary operator
+     */
     explicit segment_tree(const std::vector<T> &a, const F &f);
+
+    /**
+     * Construct in O(n).
+     *
+     * @param a base vector
+     */
     explicit segment_tree(const std::vector<T> &a);
 
     size_t size();
@@ -31,7 +42,7 @@ namespace contest {
      * Access in O(1).
      *
      * @param i index
-     * @return
+     * @return element
      */
     proxy operator[](size_t i);
 

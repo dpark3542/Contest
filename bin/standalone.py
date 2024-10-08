@@ -31,10 +31,13 @@ def dfs(include_dir: str, path: str) -> tuple[set[str], list[str]]:
 
 
 if __name__ == '__main__':
-    includes, body = dfs(f'{sys.argv[1]}/include/', f'{sys.argv[1]}/src/{sys.argv[2]}.cpp')
     filename = f'{sys.argv[1]}/out/{sys.argv[2]}.cpp'
     if os.path.isfile(filename):
         os.chmod(filename, S_IWRITE)
+        os.remove(filename)
+
+    includes, body = dfs(f'{sys.argv[1]}/include/', f'{sys.argv[1]}/src/{sys.argv[2]}.cpp')
+
     with open(filename, 'w') as file:
         for x in sorted(includes):
             file.write(f'#include {x}\n')

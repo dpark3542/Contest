@@ -4,10 +4,7 @@ project(Contest)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftrapv -D_GLIBCXX_DEBUG")
 
-get_filename_component(INCLUDE_DIR "include" DIRECTORY)
-include_directories(INCLUDE_DIR)
-
-add_executable(main main.cpp)
+include_directories("include")
 
 get_filename_component(STANDALONE_SCRIPT "bin/standalone.py" ABSOLUTE)
 

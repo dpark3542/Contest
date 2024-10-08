@@ -23,7 +23,7 @@ def dfs(include_dir: str, path: str) -> tuple[set[str], list[str]]:
         if x.startswith('<'):
             c.add(x)
         elif x not in mkd:
-            e = dfs(include_dir, include_dir + x[1:-1])
+            e = dfs(include_dir, f'{include_dir}{x[1:-1]}.hpp')
             c.update(e[0])
             d += e[1]
 

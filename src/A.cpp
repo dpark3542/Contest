@@ -3,7 +3,7 @@
 using namespace std;
 
 void solve(istream& in, ostream& out) {
-  out << 1 << endl;
+
 }
 
 int main() {

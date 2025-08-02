@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 project(Contest)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftrapv -D_GLIBCXX_DEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize-trap=all -D_GLIBCXX_DEBUG")
 
 include_directories("include")
 

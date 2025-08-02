@@ -14,7 +14,7 @@ def dfs(include_dir: str, path: str) -> tuple[set[str], list[str]]:
             match = re.search(r'#include\s+(\S+)', line)
             if match:
                 a.add(match.group(1))
-            else:
+            elif re.match(r'#pragma\s+once', line) is None:
                 b.append(line)
 
     c = set()

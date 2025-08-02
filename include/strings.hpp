@@ -1,8 +1,10 @@
+#pragma once
+
 #include <string>
 #include <vector>
 
 namespace contest {
-  std::vector<int> z(std::string s) {
+  inline std::vector<int> z(std::string s) {
     if (s.empty()) {
       return {};
     }

@@ -2,11 +2,12 @@
 
 using namespace std;
 
-void solve(istream& in, ostream& out) {
+void solve(istream &in, ostream &out) {
 
 }
 
 int main() {
+  signal(SIGABRT, [](int) { throw exception(); });
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
 

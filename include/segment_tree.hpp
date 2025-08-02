@@ -1,76 +1,96 @@
+#pragma once
+
+#include <algorithm>
 #include <cassert>
-#include <functional>
-#include <optional>
 #include <vector>
 
+// Adapted from: https://codeforces.com/blog/entry/18051
 namespace contest {
-  template<typename T, class F = std::function<T(const T&, const T&)>>
+  template<typename T>
   class segment_tree {
   private:
+    T (* const f)(T, T);
+    std::vector<T> a;
     const size_t n;
-    const F f;
-    std::vector<T> tree;
 
   public:
-    explicit segment_tree(const std::vector<T> &a, const F &f): n(a.size()), f(f) {
-      assert(n <= a.max_size() >> 1);
+    segment_tree(const size_t n, T (*f)(T, T)): f(f), a(std::vector<T>(n << 1)), n(n) {
 
-      tree = std::vector<T>(n << 1);
-      std::copy(a.begin(), a.end(), tree.begin() + n);
-      for (size_t i = n - 1, j = n >> (std::countr_zero(n) + 1); i > 0; i--) {
-        if (i == j) {
-          j >>= 1;
-        } else {
-          tree[i] = f(tree[i << 1], tree[i << 1 | 1]);
-        }
+    }
+
+    template<typename InputIt>
+    segment_tree(InputIt first, InputIt last, T (*f)(T, T)): f(f), a(std::vector<T>(first, last)), n(a.size()) {
+      a.resize(n << 1);
+      std::rotate(a.begin(), a.begin() + n, a.end());
+      for (size_t i = n - 1; i > 0; i--) {
+        a[i] = f(a[i << 1], a[i << 1 | 1]);
       }
     }
 
-    size_t size() {
+    [[nodiscard]] size_t size() const {
       return n;
     }
 
-    std::vector<T>::const_iterator begin() const noexcept {
-      return tree.begin() + n;
+    typename std::vector<T>::const_iterator begin() const noexcept {
+      return a.begin() + n;
     }
 
-    std::vector<T>::const_iterator end() const noexcept {
-      return tree.end();
+    typename std::vector<T>::const_iterator end() const noexcept {
+      return a.end();
     }
 
-    T get(size_t i) const {
-      return tree[i + n];
+    const T& operator[](const size_t i) const {
+      assert(i < n);
+
+      return a[i + n];
     }
 
-    void update(size_t i, T &t) {
-      tree[i] = t;
-      for (size_t j = i; j > 1; j >>= 1) {
-        tree[j >> 1] = f(tree[(j | 1) ^ 1], tree[j | 1]);
+    struct Proxy {
+      segment_tree &st;
+      const size_t i;
+
+      Proxy &operator=(const T &x) {
+        st.a[i + st.n] = x;
+        for (size_t j = i + st.n; j > 1; j >>= 1) {
+          st.a[j >> 1] = st.f(st.a[j], st.a[j ^ 1]);
+        }
+        return *this;
       }
+
+      explicit operator T() const {
+        return st.a[i + st.n];
+      }
+
+      friend std::ostream& operator<<(std::ostream &os, const Proxy &p) {
+        return os << p.st.a[p.i + p.st.n];
+      }
+    };
+
+    Proxy operator[](const size_t i) {
+      assert(i < n);
+
+      return Proxy{*this, i};
     }
 
-    T sum(size_t l, size_t r) {
-      assert(0 <= l && l <= r && r < n);
+    T operator[](size_t l, size_t r) const {
+      assert(l <= r && r < n);
 
-      std::optional<T> a, b;
+      T res{};
       l += n;
       r += n + 1;
       while (l < r) {
         if (l & 1) {
-          a = a.has_value() ? f(a.value(), tree[l++]) : tree[l++];
-        }
-        if (r & 1) {
-          b = b.has_value() ? f(tree[--r], b.value()) : tree[--r];
+          res = f(res, a[l++]);
         }
         l >>= 1;
+
+        if (r & 1) {
+          res = f(a[--r], res);
+        }
         r >>= 1;
       }
 
-      if (a.has_value()) {
-        return b.has_value() ? f(a.value(), b.value()) : a.value();
-      } else {
-        return b.value();
-      }
+      return res;
     }
   };
 }

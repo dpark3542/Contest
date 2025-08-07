@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace contest {
-  inline std::vector<int> z(std::string s) {
+  inline std::vector<int> z(const std::string &s) {
     if (s.empty()) {
       return {};
     }

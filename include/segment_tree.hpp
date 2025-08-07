@@ -45,31 +45,100 @@ namespace contest {
       return a[i + n];
     }
 
-    struct Proxy {
+    const T& front() const {
+      return a[n];
+    }
+
+    const T& back() const {
+      return a.back();
+    }
+
+    class proxy {
+    private:
       segment_tree &st;
       const size_t i;
 
-      Proxy &operator=(const T &x) {
-        st.a[i + st.n] = x;
-        for (size_t j = i + st.n; j > 1; j >>= 1) {
+      void propagate() const {
+        for (size_t j = i; j > 1; j >>= 1) {
           st.a[j >> 1] = st.f(st.a[j], st.a[j ^ 1]);
         }
-        return *this;
+      }
+    public:
+      proxy(segment_tree &st, const size_t i): st(st), i(i) {
+
       }
 
       explicit operator T() const {
-        return st.a[i + st.n];
+        return st.a[i];
       }
 
-      friend std::ostream& operator<<(std::ostream &os, const Proxy &p) {
-        return os << p.st.a[p.i + p.st.n];
+      proxy& operator=(const T& x) {
+        st.a[i] = x;
+        propagate();
+        return *this;
+      }
+
+      proxy& operator+=(const T& x) requires requires(T x, T y) { x += y; } {
+        st.a[i] += x;
+        propagate();
+        return *this;
+      }
+
+      proxy& operator++(T) requires requires(T x) { ++x; } {
+        ++st.a[i];
+        propagate();
+        return *this;
+      }
+
+      proxy operator++() requires requires(T x) { x++; } {
+        st.a[i]++;
+        propagate();
+        return *this;
+      }
+
+      proxy& operator-=(const T& x) requires requires(T x, T y) { x -= y; } {
+        st.a[i] -= x;
+        propagate();
+        return *this;
+      }
+
+      proxy& operator--(T) requires requires(T x) { x--; } {
+        --st.a[i];
+        propagate();
+        return *this;
+      }
+
+      proxy operator--() requires requires(T x) { --x; } {
+        st.a[i]--;
+        propagate();
+        return *this;
+      }
+
+      bool operator==(T& x) const requires requires(T x, T y) { x == y; } {
+        return st.a[i] == x;
+      }
+
+      auto operator<=>(T& x) const requires requires(T x, T y) { x <=> y; } {
+        return st.a[i] <=> x;
+      }
+
+      friend std::ostream& operator<<(std::ostream &out, const proxy &p) {
+        return out << p.st.a[p.i];
       }
     };
 
-    Proxy operator[](const size_t i) {
+    proxy operator[](const size_t i) {
       assert(i < n);
 
-      return Proxy{*this, i};
+      return proxy(*this, i + n);
+    }
+
+    proxy front() {
+      return proxy(*this, n);
+    }
+
+    proxy back() {
+      return proxy(*this, (n << 1) - 1);
     }
 
     T operator[](size_t l, size_t r) const {

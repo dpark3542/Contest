@@ -1,20 +1,22 @@
 #include <bits/stdc++.h>
 
+#include "io.hpp"
+
 using namespace std;
 
-void solve(istream &in, ostream &out) {
+void solve(istream& in, ostream &out) {
 
 }
 
 int main() {
   signal(SIGABRT, [](int) { throw exception(); });
-  std::ios_base::sync_with_stdio(false);
-  std::cin.tie(nullptr);
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
 
   int t;
-  std::cin >> t;
+  cin >> t;
   while (t--) {
-    solve(std::cin, std::cout);
+    solve(cin, cout);
   }
 
   return 0;

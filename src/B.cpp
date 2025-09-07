@@ -1,10 +1,8 @@
 #include <bits/stdc++.h>
 
-#include "io.hpp"
-
 using namespace std;
 
-void solve(istream& in, ostream &out) {
+void solve(istream& in, ostream& out) {
 
 }
 

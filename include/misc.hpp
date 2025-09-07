@@ -6,12 +6,12 @@
 
 namespace contest {
   template<typename T>
-  const T& mod(const T& x, const T& y) {
+  T mod(const T& x, const T& y) {
     return (x % y + y) % y;
   }
 
   template<typename T>
-  const T& ceil(const T& x, const T& y) {
+  T ceil(const T& x, const T& y) {
     return (x + y - 1) / y;
   }
 

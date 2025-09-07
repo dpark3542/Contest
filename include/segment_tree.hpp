@@ -18,7 +18,7 @@ namespace contest {
 
     }
 
-    template<typename InputIt>
+    template<std::input_iterator InputIt>
     segment_tree(InputIt first, InputIt last, T (*f)(T, T)): f(f), a(std::vector<T>(first, last)), n(a.size()) {
       a.resize(n << 1);
       std::rotate(a.begin(), a.begin() + n, a.end());
@@ -55,7 +55,7 @@ namespace contest {
 
     class proxy {
     private:
-      segment_tree &st;
+      segment_tree& st;
       const size_t i;
 
       void propagate() const {
@@ -64,7 +64,7 @@ namespace contest {
         }
       }
     public:
-      proxy(segment_tree &st, const size_t i): st(st), i(i) {
+      proxy(segment_tree& st, const size_t i): st(st), i(i) {
 
       }
 
@@ -122,7 +122,7 @@ namespace contest {
         return st.a[i] <=> x;
       }
 
-      friend std::ostream& operator<<(std::ostream &out, const proxy &p) {
+      friend std::ostream& operator<<(std::ostream& out, const proxy& p) {
         return out << p.st.a[p.i];
       }
     };
